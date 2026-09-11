@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,8 +38,9 @@ class MainActivity : ComponentActivity() {
             ListyCityTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     CityListScreen(
-                        cities = cityRepository.cities,
+                        cityRepository = cityRepository,
                         onAddCity = { cityRepository.addCity(it)},
+                        onDeleteCity = { cityRepository.deleteCity(it)},
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -48,8 +50,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun CityListScreen(cities: List<String>, onAddCity : (String) -> Unit, modifier: Modifier = Modifier) {
+fun CityListScreen(cityRepository: CityRepository, onAddCity : (String) -> Unit, onDeleteCity : (String) -> Unit,
+                   modifier: Modifier = Modifier) {
     var newCityName by remember { mutableStateOf("")}
+    var deletePressed = false
+    var cityToDelete = " "
     Column(modifier = modifier.fillMaxSize()) {
         Row(modifier = Modifier.padding(16.dp)) {
             OutlinedTextField(
@@ -71,23 +76,47 @@ fun CityListScreen(cities: List<String>, onAddCity : (String) -> Unit, modifier:
             ) {
                 Text("Add City")
             }
+
+            Button(
+                onClick = {
+                    if(deletePressed) {
+                        onDeleteCity(cityToDelete)
+                        deletePressed = false
+                    }
+                }
+            ) {
+                Text("Delete City")
+            }
         }
         LazyColumn(modifier = modifier.fillMaxSize()) {
-            items(cities) { city ->
-                CityRow(city = city)
+            items(cityRepository.cities) { city ->
+                Text(text = city, fontSize = 28.sp, modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 18.dp, vertical = 14.dp)
+                    .clickable{
+                        cityToDelete = city
+                        deletePressed = true }
+                )
             }
         }
     }
 
 
 }
+
+/*
 @Composable
-fun CityRow(city: String) {
+fun CityRow(city: String) : Int {
+    var deletePressed = false
     Text(text = city, fontSize = 28.sp, modifier = Modifier
         .fillMaxWidth()
         .padding(horizontal = 18.dp, vertical = 14.dp)
+        .clickable{ deletePressed = true}
     )
+    return deletePressed
 }
+ */
+
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
@@ -115,5 +144,9 @@ class CityRepository {
 
     fun addCity(city: String) {
         _cities.add(city)
+    }
+
+    fun deleteCity(city: String) {
+        _cities.remove(city)
     }
 }
